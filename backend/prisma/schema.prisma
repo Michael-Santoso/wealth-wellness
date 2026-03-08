@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum RiskProfile {
+  CONSERVATIVE
+  BALANCED
+  AGGRESSIVE
+}
+
+enum AssetType {
+  STOCK
+  ETF
+  BOND
+  CASH
+  CRYPTO
+  OTHER
+}
+
+model User {
+  id              String              @id @default(cuid())
+  email           String              @unique
+  fullName        String
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  portfolios      Portfolio[]
+  analytics       AnalyticsSnapshot[]
+  recommendations Recommendation[]
+
+  @@map("users")
+}
+
+model Portfolio {
+  id                  String              @id @default(cuid())
+  userId              String
+  name                String              @default("Primary Portfolio")
+  baseCurrency        String              @default("USD")
+  totalValue          Decimal             @db.Decimal(14, 2)
+  monthlyContribution Decimal             @db.Decimal(14, 2)
+  riskProfile         RiskProfile
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
+  user                User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  holdings            Holding[]
+  analytics           AnalyticsSnapshot[]
+  recommendations     Recommendation[]
+
+  @@index([userId])
+  @@map("portfolios")
+}
+
+model Asset {
+  id           String    @id @default(cuid())
+  symbol       String    @unique
+  name         String
+  assetType    AssetType
+  currency     String    @default("USD")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  holdings     Holding[]
+
+  @@map("assets")
+}
+
+model Holding {
+  id            String    @id @default(cuid())
+  portfolioId   String
+  assetId       String
+  quantity      Decimal   @db.Decimal(18, 6)
+  averageCost   Decimal   @db.Decimal(14, 2)
+  currentPrice  Decimal?  @db.Decimal(14, 2)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  asset         Asset     @relation(fields: [assetId], references: [id], onDelete: Restrict)
+
+  @@unique([portfolioId, assetId])
+  @@index([portfolioId])
+  @@index([assetId])
+  @@map("holdings")
+}
+
+model AnalyticsSnapshot {
+  id             String    @id @default(cuid())
+  userId         String
+  portfolioId    String?
+  netWorth       Decimal   @db.Decimal(14, 2)
+  monthlySavings Decimal   @db.Decimal(14, 2)
+  score          Int
+  generatedAt    DateTime  @default(now())
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio      Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([portfolioId])
+  @@map("analytics_snapshots")
+}
+
+model Recommendation {
+  id            String    @id @default(cuid())
+  userId        String
+  portfolioId   String?
+  title         String
+  detail        String
+  priority      Int
+  createdAt     DateTime  @default(now())
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio     Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([portfolioId])
+  @@map("recommendations")
+}
