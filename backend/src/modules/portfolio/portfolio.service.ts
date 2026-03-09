@@ -1,4 +1,9 @@
 import { prisma } from "../../lib/prisma";
+import {
+  holdingsNormalizationService,
+  type HoldingAssetType,
+  type NormalizedHoldingInput,
+} from "./holdings-normalization.service";
 
 type PortfolioInput = {
   name?: string;
@@ -11,7 +16,7 @@ type PortfolioInput = {
 type HoldingInput = {
   symbol: string;
   name: string;
-  assetType: "STOCK" | "ETF" | "BOND" | "CASH" | "CRYPTO" | "OTHER";
+  assetType: HoldingAssetType;
   currency?: string;
   quantity: number;
   averageCost: number;
@@ -96,23 +101,27 @@ export const portfolioService = {
 
   async ingestHoldings(userId: string, input: IngestHoldingsInput) {
     const portfolio = await portfolioService.upsert(userId, input.portfolio);
+    const normalizedInputHoldings = holdingsNormalizationService.normalizeHoldings(
+      input.holdings,
+      input.portfolio.baseCurrency ?? "USD",
+    );
 
     const holdings = await prisma.$transaction(async (tx: any) => {
       const persisted = [];
 
-      for (const item of input.holdings) {
+      for (const item of normalizedInputHoldings) {
         const asset = await tx.asset.upsert({
-          where: { symbol: item.symbol.toUpperCase() },
+          where: { symbol: item.symbol },
           create: {
-            symbol: item.symbol.toUpperCase(),
+            symbol: item.symbol,
             name: item.name,
             assetType: item.assetType,
-            currency: item.currency ?? input.portfolio.baseCurrency ?? "USD",
+            currency: item.currency,
           },
           update: {
             name: item.name,
             assetType: item.assetType,
-            currency: item.currency ?? input.portfolio.baseCurrency ?? "USD",
+            currency: item.currency,
           },
         });
 
@@ -128,12 +137,12 @@ export const portfolioService = {
             assetId: asset.id,
             quantity: item.quantity,
             averageCost: item.averageCost,
-            currentPrice: item.currentPrice,
+            currentPrice: item.currentPrice ?? item.averageCost,
           },
           update: {
             quantity: item.quantity,
             averageCost: item.averageCost,
-            currentPrice: item.currentPrice,
+            currentPrice: item.currentPrice ?? item.averageCost,
           },
           include: { asset: true },
         });
@@ -161,6 +170,7 @@ export const portfolioService = {
         holdingsCount: normalizedHoldings.length,
         totalHoldingsValue: Number(totalHoldingsValue.toFixed(2)),
         uploadedAt: new Date().toISOString(),
+        normalizedInputCount: normalizedInputHoldings.length,
       },
     };
   },
@@ -209,7 +219,14 @@ export const portfolioService = {
       }
     }
 
-    const status = input.parsedHoldings && input.parsedHoldings.length > 0 ? "PROCESSED" : "PENDING";
+    const normalizedParsedHoldings: NormalizedHoldingInput[] | undefined = input.parsedHoldings
+      ? holdingsNormalizationService.normalizeHoldings(input.parsedHoldings)
+      : undefined;
+
+    const status =
+      normalizedParsedHoldings && normalizedParsedHoldings.length > 0
+        ? "PROCESSED"
+        : "PENDING";
 
     return prisma.uploadJob.create({
       data: {
@@ -219,7 +236,7 @@ export const portfolioService = {
         status,
         fileName: input.fileName,
         rawInput: input.rawInput,
-        parsedHoldings: input.parsedHoldings ?? undefined,
+        parsedHoldings: normalizedParsedHoldings ?? undefined,
       },
     });
   },

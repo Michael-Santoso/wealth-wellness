@@ -26,18 +26,20 @@ Demo seed data pipeline is now added for one realistic user and portfolio so das
 - Implemented dashboard frontend page at `frontend/app/dashboard/page.tsx` using live `GET /api/analytics/summary`
 - Dashboard now shows net worth, score card, allocation chart, risk breakdown, recommendations, and trend chart
 - Added explicit loading, missing-user, empty-portfolio, and API-error states for demo reliability
+- Added holdings normalization service at `backend/src/modules/portfolio/holdings-normalization.service.ts`
+- Portfolio ingest and upload-job creation now reuse shared normalization for symbol/currency casing, numeric rounding, and parsed holdings sanitation
 
 ## Current Focus
 
-Create holdings normalization service.
+Create wellness scoring service.
 
 ## Immediate Next Step
 
-Create holdings normalization service:
+Create wellness scoring service:
 
-- centralize normalization for symbol casing, asset metadata, quantity/cost parsing, and validation
-- reuse from manual ingest and upload-job parsed holdings paths
-- keep deterministic, mock-friendly behavior without external market integrations
+- isolate score calculations from route/service orchestration
+- reuse shared score logic for analytics summary and portfolio-level analytics views
+- keep outputs explainable with score factor breakdown
 
 ## Risks / Blockers
 

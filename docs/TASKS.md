@@ -10,7 +10,7 @@
 
 ## Backend
 
-- [ ] Create holdings normalization service
+- [x] Create holdings normalization service
 - [ ] Create wellness scoring service
 - [ ] Create recommendations service
 - [ ] Create projection service
