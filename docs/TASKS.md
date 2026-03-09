@@ -4,7 +4,7 @@
 
 - [x] Review Prisma schema against MVP entities
 - [x] Finalize API contracts for portfolio ingestion
-- [ ] Seed demo data for one realistic user
+- [x] Seed demo data for one realistic user
 - [ ] Build dashboard summary endpoint
 - [ ] Build dashboard frontend page
 
@@ -26,7 +26,7 @@
 ## Database
 
 - [x] Validate schema relations
-- [ ] Add seed script
+- [x] Add seed script
 - [x] Add migration notes
 
 ## Polish

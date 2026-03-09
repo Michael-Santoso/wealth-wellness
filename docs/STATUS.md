@@ -4,6 +4,7 @@
 
 Frontend, backend, database, and Prisma ORM are initialized and connected.
 Prisma schema has now been reviewed and extended to cover key MVP entities for ingestion and projections.
+Demo seed data pipeline is now added for one realistic user and portfolio so dashboard flows have immediate test data.
 
 ## Last Completed
 
@@ -16,18 +17,21 @@ Prisma schema has now been reviewed and extended to cover key MVP entities for i
 - Finalized portfolio ingestion API contracts with Zod validation and normalized DTO responses
 - Added demo upload job contract for CSV/AI/manual/wallet ingestion workflows
 - Mounted all backend module routes under `/api` (auth, portfolio, analytics, recommendations)
+- Added idempotent Prisma seed script at `backend/prisma/seed.ts`
+- Seed now populates demo user, portfolio, holdings, analytics snapshot, recommendations, projections, asset snapshots, and a processed upload job
+- Added seed commands: `npm run prisma:seed` and `npx prisma db seed`
 
 ## Current Focus
 
-Seed one realistic demo user and portfolio data for end-to-end dashboard flows.
+Build dashboard summary endpoint.
 
 ## Immediate Next Step
 
-Seed demo data for one realistic user:
+Build dashboard summary endpoint:
 
-- user + portfolio baseline
-- representative holdings across asset classes
-- starter recommendations + analytics snapshot
+- aggregate net worth, score, allocation, liquidity, and top recommendations
+- source from seeded and ingested portfolio data paths
+- return stable response for frontend dashboard integration
 
 ## Risks / Blockers
 
