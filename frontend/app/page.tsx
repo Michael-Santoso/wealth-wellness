@@ -5,7 +5,7 @@ const modules = [
   {
     title: "Dashboard",
     href: "/dashboard",
-    description: "Preview the wealth wellness dashboard with mock KPI and insights cards.",
+    description: "View live wealth wellness metrics, allocation, risk, trend, and recommendations.",
   },
   {
     title: "Auth",
