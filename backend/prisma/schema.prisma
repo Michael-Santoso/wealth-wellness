@@ -27,15 +27,36 @@ enum AssetType {
   OTHER
 }
 
+enum ProjectionCase {
+  BASE
+  OPTIMISTIC
+  CONSERVATIVE
+}
+
+enum UploadSource {
+  MANUAL
+  CSV
+  AI_EXTRACT
+  WALLET
+}
+
+enum UploadStatus {
+  PENDING
+  PROCESSED
+  FAILED
+}
+
 model User {
-  id              String              @id @default(cuid())
-  email           String              @unique
+  id              String               @id @default(cuid())
+  email           String               @unique
   fullName        String
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt       DateTime             @default(now())
+  updatedAt       DateTime             @updatedAt
   portfolios      Portfolio[]
   analytics       AnalyticsSnapshot[]
   recommendations Recommendation[]
+  projections     ProjectionScenario[]
+  uploadJobs      UploadJob[]
 
   @@map("users")
 }
@@ -54,20 +75,23 @@ model Portfolio {
   holdings            Holding[]
   analytics           AnalyticsSnapshot[]
   recommendations     Recommendation[]
+  projections         ProjectionScenario[]
+  uploadJobs          UploadJob[]
 
   @@index([userId])
   @@map("portfolios")
 }
 
 model Asset {
-  id           String    @id @default(cuid())
-  symbol       String    @unique
+  id           String          @id @default(cuid())
+  symbol       String          @unique
   name         String
   assetType    AssetType
-  currency     String    @default("USD")
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  currency     String          @default("USD")
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
   holdings     Holding[]
+  snapshots    AssetSnapshot[]
 
   @@map("assets")
 }
@@ -91,14 +115,14 @@ model Holding {
 }
 
 model AnalyticsSnapshot {
-  id             String    @id @default(cuid())
+  id             String     @id @default(cuid())
   userId         String
   portfolioId    String?
-  netWorth       Decimal   @db.Decimal(14, 2)
-  monthlySavings Decimal   @db.Decimal(14, 2)
+  netWorth       Decimal    @db.Decimal(14, 2)
+  monthlySavings Decimal    @db.Decimal(14, 2)
   score          Int
-  generatedAt    DateTime  @default(now())
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  generatedAt    DateTime   @default(now())
+  user           User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   portfolio      Portfolio? @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
 
   @@index([userId])
@@ -120,4 +144,61 @@ model Recommendation {
   @@index([userId])
   @@index([portfolioId])
   @@map("recommendations")
+}
+
+model AssetSnapshot {
+  id         String   @id @default(cuid())
+  assetId    String
+  price      Decimal  @db.Decimal(14, 2)
+  asOf       DateTime
+  source     String   @default("DEMO")
+  createdAt  DateTime @default(now())
+  asset      Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@unique([assetId, asOf])
+  @@index([asOf])
+  @@map("asset_snapshots")
+}
+
+model ProjectionScenario {
+  id                    String          @id @default(cuid())
+  userId                String
+  portfolioId           String?
+  scenario              ProjectionCase
+  years                 Int             @default(5)
+  expectedAnnualReturn  Decimal         @db.Decimal(5, 2)
+  expectedAnnualVol     Decimal?        @db.Decimal(5, 2)
+  monthlyContribution   Decimal         @db.Decimal(14, 2)
+  projectedEndingValue  Decimal         @db.Decimal(14, 2)
+  assumptions           Json?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio             Portfolio?      @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([portfolioId])
+  @@index([scenario])
+  @@map("projection_scenarios")
+}
+
+model UploadJob {
+  id               String       @id @default(cuid())
+  userId           String
+  portfolioId      String?
+  source           UploadSource
+  status           UploadStatus @default(PENDING)
+  fileName         String?
+  rawInput         String?
+  parsedHoldings   Json?
+  errorMessage     String?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  user             User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  portfolio        Portfolio?   @relation(fields: [portfolioId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([portfolioId])
+  @@index([status, createdAt])
+  @@map("upload_jobs")
 }

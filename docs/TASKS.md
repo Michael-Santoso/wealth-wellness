@@ -1,0 +1,36 @@
+# TASKS.md
+
+## Highest Priority
+
+- [x] Review Prisma schema against MVP entities
+- [x] Finalize API contracts for portfolio ingestion
+- [ ] Seed demo data for one realistic user
+- [ ] Build dashboard summary endpoint
+- [ ] Build dashboard frontend page
+
+## Backend
+
+- [ ] Create holdings normalization service
+- [ ] Create wellness scoring service
+- [ ] Create recommendations service
+- [ ] Create projection service
+
+## Frontend
+
+- [ ] Dashboard layout
+- [ ] Asset allocation chart
+- [ ] Wellness score card
+- [ ] Recommendation cards
+- [ ] Projection simulator UI
+
+## Database
+
+- [x] Validate schema relations
+- [ ] Add seed script
+- [x] Add migration notes
+
+## Polish
+
+- [ ] Trust/privacy copy
+- [ ] Empty states
+- [ ] Demo walkthrough flow
